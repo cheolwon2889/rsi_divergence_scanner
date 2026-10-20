@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233182F6'/%3E%3Cpath d='M6 22 L12 12 L17 18 L26 7' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M6 10 L12 18 L17 12 L26 22' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' opacity='.45'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<title>RSI 다이버전스 스캐너</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">RSI 다이버전스 스캐너 <span class="badge" id="exBadge">—</span></div>
+  <div class="head-right">
+    <span class="meta" id="scanMeta">불러오는 중…</span>
+    <button class="ghost" id="btnRefresh">새로고침</button>
+  </div>
+</header>
+
+<main>
+  <div id="notices"></div>
+
+  <!-- 조건 -->
+  <section class="panel controls">
+   <details class="ctl" id="ctl" open>
+    <summary id="ctlSum">조건</summary>
+    <div class="row">
+      <div class="field grow">
+        <div class="flabel">시간봉</div>
+        <div class="chips" id="tfChips"></div>
+      </div>
+      <div class="field">
+        <div class="flabel">방향</div>
+        <div class="seg" data-key="side">
+          <button data-v="all">전체</button>
+          <button data-v="bull" class="bull">상승</button>
+          <button data-v="bear" class="bear">하락</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flabel">종류</div>
+        <div class="seg" data-key="kind">
+          <button data-v="regular">일반</button>
+          <button data-v="hidden">히든</button>
+          <button data-v="all">전체</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flabel">상태</div>
+        <div class="seg" data-key="status">
+          <button data-v="all">전체</button>
+          <button data-v="confirmed">확정</button>
+          <button data-v="forming">형성 중</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <div class="flabel">최근</div>
+        <select id="maxAge">
+          <option value="10">10봉 이내</option>
+          <option value="20">20봉 이내</option>
+          <option value="40">40봉 이내</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="flabel">정렬</div>
+        <select id="sort">
+          <option value="recent">최근 순</option>
+          <option value="rsi">RSI 차이 큰 순</option>
+          <option value="volume">거래대금 큰 순</option>
+        </select>
+      </div>
+      <div class="field grow">
+        <div class="flabel">코인 검색</div>
+        <input type="search" id="q" placeholder="예: BTC" autocomplete="off" spellcheck="false" maxlength="20">
+      </div>
+      <label class="check"><input type="checkbox" id="zone"><span>과매도·과매수권에서 시작한 것만</span></label>
+      <label class="check"><input type="checkbox" id="nonCrypto"><span>주식·원자재 계약 포함</span></label>
+    </div>
+
+    <details class="help">
+      <summary>용어 설명</summary>
+      <dl>
+        <dt>상승 일반</dt><dd>가격 저점은 <b>낮아졌는데</b> RSI 저점은 <b>높아짐</b>. 하락 힘이 약해진다는 뜻으로 읽습니다.</dd>
+        <dt>하락 일반</dt><dd>가격 고점은 <b>높아졌는데</b> RSI 고점은 <b>낮아짐</b>. 상승 힘이 약해진다는 뜻으로 읽습니다.</dd>
+        <dt>히든</dt><dd>일반의 반대입니다. 상승 히든은 가격 저점이 높아지는데 RSI 저점은 낮아지고, 하락 히든은 가격 고점이 낮아지는데 RSI 고점은 높아집니다. 기존 추세가 이어진다는 쪽으로 읽습니다.</dd>
+        <dt>확정</dt><dd>두 번째 피벗 오른쪽으로 5봉이 지나 피벗이 굳은 것.</dd>
+        <dt>형성 중</dt><dd>오른쪽이 2~4봉만 지나 아직 굳지 않은 후보. 더 빨리 보이지만 뒤집힐 수 있습니다.</dd>
+        <dt>과매도·과매수권</dt><dd>첫 번째 피벗의 RSI 가 상승 쪽은 40 이하, 하락 쪽은 60 이상인 것.</dd>
+        <dt>봉 수</dt><dd>마지막으로 마감된 봉 기준으로, 두 번째 피벗이 몇 봉 전에 찍혔는지입니다.</dd>
+      </dl>
+    </details>
+   </details>
+  </section>
+
+  <!-- 요약 -->
+  <section class="summary" id="summary"></section>
+
+  <!-- 결과 -->
+  <section class="panel list">
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>코인</th>
+            <th>시간봉</th>
+            <th>신호</th>
+            <th class="num">현재가</th>
+            <th class="num hide-sm">가격 (앞 → 뒤)</th>
+            <th class="num">RSI (앞 → 뒤)</th>
+            <th class="num">경과</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">불러오는 중…</div>
+  </section>
+
+  <p class="note">
+    마감된 봉만으로 계산하며 RSI 는 14, 피벗은 좌우 5봉 기준입니다. 두 피벗을 잇는 선을 그 사이 봉이 뚫었거나,
+    두 번째 피벗 이후에 저점·고점이 깨진 것은 제외합니다. 이 목록은 <b>참고용 신호</b>이며 매수·매도 추천이 아닙니다.
+    다이버전스는 추세가 강할 때 오래 어긋난 채 이어지기도 하니 다른 근거와 함께 보세요.
+  </p>
+</main>
+
+<!-- 차트 -->
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="mTitle">—</div>
+        <div class="sheet-sub" id="mSub"></div>
+      </div>
+      <div class="sheet-actions">
+        <div class="chips" id="mTf"></div>
+        <a class="btn" id="mLink" target="_blank" rel="noopener noreferrer">거래소에서 열기 ↗</a>
+        <button class="ghost" id="mClose" aria-label="닫기">✕</button>
+      </div>
+    </div>
+    <div id="mNotice"></div>
+    <div id="chartPrice" class="chart"></div>
+    <div id="chartRsi" class="chart rsi"></div>
+    <div class="legend" id="mLegend"></div>
+  </div>
+</div>
+
+<script src="/vendor/lightweight-charts.js"></script>
+<script src="/chart.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

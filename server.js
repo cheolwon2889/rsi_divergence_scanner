@@ -30,6 +30,8 @@ const path = require('node:path');
 const express = require('express');
 const { getProvider, TIMEFRAMES, TF_SECONDS } = require('./src/exchanges');
 const { Scanner } = require('./src/scanner');
+const { HarmonicWatcher } = require('./src/harmonicWatch');
+const { createTelegram } = require('./src/telegram');
 
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === 'production';
@@ -51,6 +53,19 @@ const topN = Math.min(500, Math.max(10, Number(process.env.TOP_N) || 150));
 const minVolume = Math.max(0, Number(process.env.MIN_VOLUME) || 1_000_000);
 
 const scanner = new Scanner({ provider, timeframes, topN, minVolume });
+
+// 하모닉 PRZ 감시 → 텔레그램. HARMONIC=off 로 끌 수 있다.
+const telegram = createTelegram();
+const harmonicTfs = String(process.env.HARMONIC_TIMEFRAMES || '1h,4h')
+  .split(',').map(s => s.trim()).filter(t => TIMEFRAMES.includes(t));
+const numEnv = (k, d) => (Number.isFinite(Number(process.env[k])) && process.env[k] !== '' && process.env[k] !== undefined ? Number(process.env[k]) : d);
+const harmonic = String(process.env.HARMONIC || 'on').toLowerCase() === 'off' ? null : new HarmonicWatcher({
+  scanner, provider, timeframes: harmonicTfs,
+  notify: telegram.send,
+  intervalMs: Math.max(1, numEnv('HARMONIC_INTERVAL_MIN', 5)) * 60e3,
+  nearPct: numEnv('HARMONIC_NEAR_PCT', 1.0),
+  opts: { devPct: numEnv('HARMONIC_DEV_PCT', 10), tolPct: numEnv('HARMONIC_TOL_PCT', 10), przPct: numEnv('HARMONIC_PRZ_PCT', 3) }
+});
 
 // ------------------------------------------------------------------- 앱
 const app = express();
@@ -117,6 +132,12 @@ app.get('/api/divergences', (req, res) => {
   res.json({ ...result, now: Date.now() });
 });
 
+app.get('/api/harmonic', (req, res) => {
+  noCache(res);
+  if (!harmonic) return res.json({ enabled: false });
+  res.json({ enabled: true, telegram: telegram.stats(), ...harmonic.status(), now: Date.now() });
+});
+
 // 차트는 거래소를 직접 호출하므로 IP 별로 호출 수를 제한한다.
 const hits = new Map();
 function chartLimited(ip) {
@@ -171,6 +192,10 @@ app.listen(PORT, () => {
   console.log(`  검사대상 : 거래대금 상위 ${topN}개 (24h ${minVolume.toLocaleString('en-US')} USDT 이상)`);
   console.log('='.repeat(62));
   scanner.start();
+  if (harmonic) {
+    console.log(`  하모닉   : ${harmonicTfs.join(', ')} · 텔레그램 ${telegram.enabled ? '켜짐' : '미설정 (로그에만 남김)'}`);
+    harmonic.start();
+  }
 });
 
 module.exports = { app, scanner, TF_SECONDS };

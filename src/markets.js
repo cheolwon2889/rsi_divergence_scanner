@@ -24,7 +24,7 @@ const BASE_LIST = [
   'DELL', 'WDC', 'SNDK', 'MRVL', 'LITE', 'COHR', 'GLW', 'AAOI', 'AXTI', 'BE', 'PLTR', 'RKLB', 'ASTS', 'HOOD',
   'COIN', 'MSTR', 'CRCL', 'CRWV', 'NBIS', 'IREN', 'BMNR', 'CBRS', 'BABA', 'INTW',
   // 한국·중국 주식 및 상장 전 종목
-  'SAMSUNG', 'SKHYNIX', 'SKHY', 'CXMT', 'OPENAI', 'UNITREE', 'ZHIPU', 'MINIMAX'
+  'SAMSUNG', 'SKHYNIX', 'SKHY', 'CXMT', 'OPENAI', 'ANTHROPIC', 'UNITREE', 'ZHIPU', 'MINIMAX'
 ];
 
 const extra = String(process.env.EXTRA_NON_CRYPTO || '')

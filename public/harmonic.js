@@ -57,11 +57,12 @@ function stateOf(zone, price, nearPct) {
 
 function distanceOf(zone, price) {
   if (!Number.isFinite(price)) return { text: '—', cls: '' };
+  // 상승 패턴은 가격이 구간까지 "내려와야" 닿는다. 그래서 위에 있으면 하락이 필요하다.
   if (price > zone.hi) {
     const p = ((price - zone.hi) / zone.hi) * 100;
-    return { text: `+${p.toFixed(2)}%`, cls: p <= (status.nearPct || 1) ? 'dist-up' : '' };
+    return { text: `${p.toFixed(2)}% 하락 필요`, cls: p <= (status.nearPct || 1) ? 'dist-up' : '' };
   }
-  if (price < zone.lo) return { text: `${(((price - zone.lo) / zone.lo) * 100).toFixed(2)}%`, cls: 'dist-below' };
+  if (price < zone.lo) return { text: '구간 아래 (이탈)', cls: 'dist-below' };
   return { text: '구간 안', cls: 'dist-in' };
 }
 

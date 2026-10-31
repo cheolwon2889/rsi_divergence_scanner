@@ -9,12 +9,12 @@
 
 const $ = (id) => document.getElementById(id);
 const TF_SEC = { '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '4h': 14400, '1d': 86400 };
-const STORE_KEY = 'rsiDiv.filters.v1';
+const STORE_KEY = 'rsiDiv.filters.v2';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // ------------------------------------------------------------------- 상태
-const DEFAULTS = { tfs: null, side: 'all', kind: 'regular', status: 'all', maxAge: '20', sort: 'recent', q: '', zone: false, nonCrypto: false };
+const DEFAULTS = { tfs: null, side: 'all', kind: 'regular', status: 'all', maxAge: '20', sort: 'volume', q: '', zone: false, nonCrypto: false };
 let f = loadFilters();
 let status = null;
 let items = [];
@@ -189,7 +189,8 @@ function renderRows() {
       ? `<span class="sub ${it.change24h >= 0 ? 'pos' : 'neg'}">${sgn(it.change24h)}</span>` : '';
 
     return `<tr data-i="${i}" title="두 번째 피벗: ${esc(kst(it.p2Time))} (한국시간)">
-      <td><span class="coin">${esc(it.base)}</span><span class="sub">${fmtVol(it.quoteVolume)}${it.nonCrypto ? ' · 비코인(추정)' : ''}</span></td>
+      <td><span class="coin">${esc(it.base)}</span>${it.nonCrypto ? '<span class="sub">비코인(추정)</span>' : ''}</td>
+      <td class="num vol">${fmtVol(it.quoteVolume) || '—'}</td>
       <td class="tfb">${esc(it.tf)}</td>
       <td><span class="sig">
         <span class="tag ${it.side}">${labelOf(it)}</span>

@@ -204,3 +204,5 @@ td.num { font-family: var(--mono); font-size: 13.5px; }
   .sig { gap: 4px; }
   .coin { font-size: 15px; }
 }
+
+td.vol { color: var(--text-2); }

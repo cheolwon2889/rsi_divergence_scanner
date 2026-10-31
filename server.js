@@ -32,6 +32,7 @@ const { getProvider, TIMEFRAMES, TF_SECONDS } = require('./src/exchanges');
 const { Scanner } = require('./src/scanner');
 const { HarmonicWatcher } = require('./src/harmonicWatch');
 const { createTelegram } = require('./src/telegram');
+const { analyze } = require('./src/harmonic');
 
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === 'production';
@@ -136,6 +137,45 @@ app.get('/api/harmonic', (req, res) => {
   noCache(res);
   if (!harmonic) return res.json({ enabled: false });
   res.json({ enabled: true, telegram: telegram.stats(), ...harmonic.status(), now: Date.now() });
+});
+
+// 하모닉 차트: 캔들 + 패턴 점(X·A·B·C) + PRZ 구간 + 반등 확인 시 손절·목표.
+// 감시 목록과 같은 계산(analyze)을 쓰므로 화면과 알림이 어긋나지 않는다.
+app.get('/api/harmonic/chart', async (req, res) => {
+  noCache(res);
+  const symbol = String(req.query.symbol || '');
+  const tf = String(req.query.tf || '');
+  if (!harmonicTfs.includes(tf)) return res.status(400).json({ error: 'BAD_TF', message: '하모닉 감시 시간봉이 아닙니다.' });
+  if (!scanner.hasSymbol(symbol)) return res.status(404).json({ error: 'NO_SYMBOL', message: '알 수 없는 종목입니다.' });
+  if (chartLimited(req.ip)) return res.status(429).json({ error: 'RATE', message: '잠시 후 다시 시도하세요. (분당 30회 제한)' });
+
+  try {
+    await scanner.throttle();
+    const raw = await provider.candles(symbol, tf, 1000);
+    const per = TF_SECONDS[tf];
+    const lastOpen = raw.length > 0 && raw[raw.length - 1].t + per > Date.now() / 1000;
+    const opts = harmonic ? harmonic.opts : {};
+    const r = analyze(raw, opts, lastOpen);
+    const mk = scanner.marketMap.get(symbol) || {};
+    const at = (idx) => (idx >= 0 && raw[idx] ? raw[idx].t : null);
+
+    res.json({
+      symbol, base: mk.base || symbol, tf, url: provider.tradeUrl(symbol), lastOpen,
+      candles: raw.map(k => ({ time: k.t, open: k.o, high: k.h, low: k.l, close: k.c })),
+      structure: r && {
+        X: r.X, A: r.A, B: r.B, C: r.C, xab: r.xab, abc: r.abc,
+        zones: r.zones.map(z => ({
+          name: z.name, lo: z.lo, hi: z.hi, pad: z.pad,
+          touchT: at(z.touchIdx), passT: at(z.passIdx),
+          sig: z.sig && { t: at(z.sig.idx), close: z.sig.close, stop: z.sig.stop, target: z.sig.target, valid: z.sig.valid },
+          status: z.passIdx >= 0 ? '이탈' : z.sig ? '반등 확인' : z.touchIdx >= 0 ? '도달' : '대기'
+        }))
+      }
+    });
+  } catch (e) {
+    console.warn('[harmonic chart] 실패:', symbol, tf, e.message);
+    res.status(502).json({ error: 'UPSTREAM', message: '거래소에서 차트 데이터를 받지 못했습니다.' });
+  }
 });
 
 // 차트는 거래소를 직접 호출하므로 IP 별로 호출 수를 제한한다.

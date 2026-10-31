@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233182F6'/%3E%3Cpath d='M6 22 L12 12 L17 18 L26 7' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<title>하모닉 PRZ 목록</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/harmonic.css">
+</head>
+<body>
+
+<header>
+  <div class="brand"><a class="back" href="/">← 스캐너</a> 하모닉 PRZ <span class="badge" id="exBadge">—</span></div>
+  <div class="head-right">
+    <span class="meta" id="scanMeta">불러오는 중…</span>
+    <button class="ghost" id="btnRefresh">새로고침</button>
+  </div>
+</header>
+
+<main>
+  <div id="notices"></div>
+
+  <section class="panel controls">
+    <div class="row">
+      <div class="field">
+        <div class="flabel">시간봉</div>
+        <div class="chips" id="tfChips"></div>
+      </div>
+      <div class="field">
+        <div class="flabel">상태</div>
+        <select id="status">
+          <option value="live">진행 중 (이탈 제외)</option>
+          <option value="near">접근 중 (상단 1% 이내)</option>
+          <option value="touch">도달 · 반등 확인</option>
+          <option value="all">전체 (이탈 포함)</option>
+        </select>
+      </div>
+      <div class="field grow">
+        <div class="flabel">코인 검색</div>
+        <input type="search" id="q" placeholder="예: BTC" autocomplete="off" spellcheck="false" maxlength="20">
+      </div>
+    </div>
+    <details class="help">
+      <summary>용어 설명</summary>
+      <dl>
+        <dt>PRZ</dt><dd>D 가 올 것으로 예상되는 가격 구간입니다. 롱을 시도해 볼 자리입니다.</dd>
+        <dt>접근 중</dt><dd>현재가가 구간 상단에서 1% 이내로 올라와 있습니다. 아직 닿지 않았습니다.</dd>
+        <dt>도달</dt><dd>가격이 구간에 닿았습니다. 롱 트라이 구간입니다.</dd>
+        <dt>반등 확인</dt><dd>닿은 뒤 종가가 구간 상단 위로 돌아왔습니다. 손절과 목표가를 같이 보여 줍니다.</dd>
+        <dt>이탈</dt><dd>가격이 구간 하단 아래로 내려갔습니다. 패턴이 깨졌을 수 있습니다.</dd>
+        <dt>구간까지</dt><dd>현재가가 구간 상단보다 얼마나 위(+)에 있는지, 또는 하단보다 얼마나 아래(−)에 있는지입니다.</dd>
+      </dl>
+    </details>
+  </section>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="panel list">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>코인</th>
+            <th>시간봉</th>
+            <th>패턴</th>
+            <th class="num">구간</th>
+            <th class="num">현재가</th>
+            <th class="num">구간까지</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">불러오는 중…</div>
+  </section>
+
+  <p class="note">
+    이 화면은 참고용입니다. 하모닉 패턴이 실제로 반등을 잡는지는 검증하지 않았습니다. 매수·매도 추천이 아닙니다.
+  </p>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="mTitle">—</div>
+        <div class="sheet-sub" id="mSub"></div>
+      </div>
+      <div class="sheet-actions">
+        <div class="chips" id="mTf"></div>
+        <a class="btn" id="mLink" target="_blank" rel="noopener noreferrer">거래소에서 열기 ↗</a>
+        <button class="ghost" id="mClose" aria-label="닫기">✕</button>
+      </div>
+    </div>
+    <div id="mNotice"></div>
+    <div id="chart" class="chart"></div>
+    <div class="legend" id="mLegend"></div>
+  </div>
+</div>
+
+<script src="/vendor/lightweight-charts.js"></script>
+<script src="/harmonic.js"></script>
+</body>
+</html>

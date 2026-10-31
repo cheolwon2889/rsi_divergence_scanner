@@ -1,0 +1,26 @@
+/* 하모닉 페이지 전용. 공통 요소는 style.css 를 그대로 쓴다. */
+
+.back { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; margin-right: 6px; }
+.back:hover { color: var(--text); }
+
+.chips button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+.st { display: inline-block; padding: 3px 9px; border-radius: 7px; font-size: 12.5px; font-weight: 700; }
+.st.near { background: rgba(245, 166, 35, .16); color: #FFC95C; }
+.st.touch { background: rgba(49, 130, 246, .16); color: #7FB0FF; }
+.st.sig { background: rgba(21, 196, 126, .16); color: #4ADE9F; }
+.st.pass { background: var(--card2); color: var(--muted); }
+.st.wait { background: var(--card2); color: var(--text-2); }
+
+.chart { height: 420px; }
+.legend button { flex-direction: column; align-items: flex-start; gap: 4px; }
+.legend button.on { border-color: var(--blue); }
+
+.dist-up { color: #FFC95C; }
+.dist-in { color: #7FB0FF; font-weight: 700; }
+.dist-below { color: var(--muted); }
+
+@media (max-width: 760px) {
+  .chart { height: 300px; }
+  .hide-sm { display: none; }
+}

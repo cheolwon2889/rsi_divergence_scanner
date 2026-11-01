@@ -23,12 +23,13 @@ const WORKERS = 3;
 const CANDLE_LIMIT = 500;
 
 class Scanner {
-  constructor({ provider, timeframes, topN = 150, minVolume = 1_000_000, detectOpts = {} }) {
+  constructor({ provider, timeframes, topN = 150, minVolume = 1_000_000, detectOpts = {}, onScanned = null }) {
     this.provider = provider;
     this.timeframes = timeframes;
     this.topN = topN;
     this.minVolume = minVolume;
     this.detectOpts = detectOpts;
+    this.onScanned = onScanned;      // (tf, items) => void, 한 시간봉 검사가 끝날 때마다 불린다
 
     this.marketMap = new Map();    // 전체 종목 (가격·거래대금 표시용)
     this.markets = [];             // 검사 대상 (거래대금 상위)
@@ -173,6 +174,9 @@ class Scanner {
       st.bucket = bucket;
       st.scannedAt = Date.now();
       st.durationMs = Date.now() - t0;
+      if (this.onScanned) {
+        try { this.onScanned(tf, items); } catch (e) { console.warn('[scan] 알림 처리 실패:', e.message); }
+      }
       console.log(`[scan] ${tf} 완료: ${list.length}종목 → 신호 ${items.length}개 (${(st.durationMs / 1000).toFixed(1)}초, 오류 ${st.errors})`);
     } catch (e) {
       console.error(`[scan] ${tf} 검사 실패: ${e.message}`);

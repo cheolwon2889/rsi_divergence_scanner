@@ -32,6 +32,7 @@ const { getProvider, TIMEFRAMES, TF_SECONDS } = require('./src/exchanges');
 const { Scanner } = require('./src/scanner');
 const { HarmonicWatcher } = require('./src/harmonicWatch');
 const { createTelegram } = require('./src/telegram');
+const { createDivAlerter } = require('./src/divAlert');
 const { analyze } = require('./src/harmonic');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -53,16 +54,32 @@ const timeframes = [...new Set(wantedTfs)];
 const topN = Math.min(500, Math.max(10, Number(process.env.TOP_N) || 150));
 const minVolume = Math.max(0, Number(process.env.MIN_VOLUME) || 1_000_000);
 
-const scanner = new Scanner({ provider, timeframes, topN, minVolume });
+const numEnv = (k, d) => (Number.isFinite(Number(process.env[k])) && process.env[k] !== '' && process.env[k] !== undefined ? Number(process.env[k]) : d);
+const listEnv = (k, d) => String(process.env[k] || d).split(',').map(s => s.trim()).filter(Boolean);
 
-// 하모닉 PRZ 감시 → 텔레그램. HARMONIC=off 로 끌 수 있다.
+// 텔레그램. 하모닉 PRZ 알림은 HARMONIC_TELEGRAM=on 일 때만 보낸다 (기본 꺼짐).
 const telegram = createTelegram();
+
+// RSI 다이버전스 "확정" 알림. DIV_ALERT=off 로 끌 수 있다.
+const divAlertOn = String(process.env.DIV_ALERT || 'on').toLowerCase() !== 'off';
+const divAlert = divAlertOn ? createDivAlerter({
+  notify: telegram.send,
+  side: String(process.env.DIV_ALERT_SIDE || 'all').toLowerCase(),
+  timeframes: listEnv('DIV_ALERT_TIMEFRAMES', '1h,4h,1d').filter(t => TIMEFRAMES.includes(t)),
+  maxAgeBars: numEnv('DIV_ALERT_MAX_AGE', 6),
+  minVolume: numEnv('DIV_ALERT_MIN_VOLUME', 5_000_000),
+  volumeOf: (symbol) => (scanner.marketMap.get(symbol) || {}).quoteVolume || 0
+}) : null;
+
+const scanner = new Scanner({ provider, timeframes, topN, minVolume, onScanned: divAlert ? divAlert.onScan : null });
+
+// 하모닉 PRZ 감시. 화면(/harmonic.html)용으로 항상 돌리고, 텔레그램은 HARMONIC_TELEGRAM=on 일 때만 보낸다.
 const harmonicTfs = String(process.env.HARMONIC_TIMEFRAMES || '1h,4h')
   .split(',').map(s => s.trim()).filter(t => TIMEFRAMES.includes(t));
-const numEnv = (k, d) => (Number.isFinite(Number(process.env[k])) && process.env[k] !== '' && process.env[k] !== undefined ? Number(process.env[k]) : d);
+const harmonicTelegramOn = String(process.env.HARMONIC_TELEGRAM || 'off').toLowerCase() === 'on';
 const harmonic = String(process.env.HARMONIC || 'on').toLowerCase() === 'off' ? null : new HarmonicWatcher({
   scanner, provider, timeframes: harmonicTfs,
-  notify: telegram.send,
+  notify: harmonicTelegramOn ? telegram.send : async () => false,
   intervalMs: Math.max(1, numEnv('HARMONIC_INTERVAL_MIN', 5)) * 60e3,
   nearPct: numEnv('HARMONIC_NEAR_PCT', 1.0),
   opts: { devPct: numEnv('HARMONIC_DEV_PCT', 10), tolPct: numEnv('HARMONIC_TOL_PCT', 10), przPct: numEnv('HARMONIC_PRZ_PCT', 3) }
@@ -232,8 +249,11 @@ app.listen(PORT, () => {
   console.log(`  검사대상 : 거래대금 상위 ${topN}개 (24h ${minVolume.toLocaleString('en-US')} USDT 이상)`);
   console.log('='.repeat(62));
   scanner.start();
+  if (divAlert) {
+    console.log(`  다이버전스 알림 : 확정 신호 · ${listEnv('DIV_ALERT_TIMEFRAMES', '1h,4h,1d').join(', ')} · 거래대금 ${numEnv('DIV_ALERT_MIN_VOLUME', 5_000_000).toLocaleString('en-US')} USDT 이상 · 텔레그램 ${telegram.enabled ? '켜짐' : '미설정 (로그에만 남김)'}`);
+  }
   if (harmonic) {
-    console.log(`  하모닉   : ${harmonicTfs.join(', ')} · 텔레그램 ${telegram.enabled ? '켜짐' : '미설정 (로그에만 남김)'}`);
+    console.log(`  하모닉   : ${harmonicTfs.join(', ')} · 텔레그램 ${harmonicTelegramOn ? (telegram.enabled ? '켜짐' : '미설정 (로그에만 남김)') : '꺼짐 (화면만)'}`);
     harmonic.start();
   }
 });

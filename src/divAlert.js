@@ -36,7 +36,7 @@ function message(it) {
   const up = it.side === 'bull';
   const head = `${up ? '📈 상승' : '📉 하락'} 다이버전스 확정 · ${TF_LABEL[it.tf] || it.tf}`;
   const kind = it.kind === 'regular' ? '일반' : '히든';
-  const zone = it.inZone ? (up ? '과매도권(RSI 40 이하)에서 시작' : '과매수권(RSI 60 이상)에서 시작') : null;
+  const zone = it.inZone ? (up ? '과매도권(RSI 30 이하)에서 시작' : '과매수권(RSI 70 이상)에서 시작') : null;
   return [
     head,
     `${it.base}/USDT (Gate 선물)`,

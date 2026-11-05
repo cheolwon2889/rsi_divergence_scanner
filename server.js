@@ -67,6 +67,8 @@ const divAlert = divAlertOn ? createDivAlerter({
   side: String(process.env.DIV_ALERT_SIDE || 'all').toLowerCase(),
   timeframes: listEnv('DIV_ALERT_TIMEFRAMES', '1h,4h,1d').filter(t => TIMEFRAMES.includes(t)),
   maxAgeBars: numEnv('DIV_ALERT_MAX_AGE', 6),
+  kind: String(process.env.DIV_ALERT_KIND || 'regular').toLowerCase(),
+  zoneOnly: String(process.env.DIV_ALERT_ZONE_ONLY || 'on').toLowerCase() !== 'off',
   minVolume: numEnv('DIV_ALERT_MIN_VOLUME', 5_000_000),
   volumeOf: (symbol) => (scanner.marketMap.get(symbol) || {}).quoteVolume || 0
 }) : null;

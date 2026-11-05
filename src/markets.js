@@ -22,7 +22,7 @@ const BASE_LIST = [
   // 미국 주식
   'NVDA', 'TSLA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AMD', 'INTC', 'MU', 'AVGO', 'ARM', 'ORCL', 'TSM',
   'DELL', 'WDC', 'SNDK', 'MRVL', 'LITE', 'COHR', 'GLW', 'AAOI', 'AXTI', 'BE', 'PLTR', 'RKLB', 'ASTS', 'HOOD',
-  'COIN', 'MSTR', 'CRCL', 'CRWV', 'NBIS', 'IREN', 'BMNR', 'CBRS', 'BABA', 'INTW',
+  'COIN', 'MSTR', 'CRCL', 'CRWV', 'NBIS', 'IREN', 'BMNR', 'CBRS', 'BABA', 'INTW', 'QCOM',
   // 한국·중국 주식 및 상장 전 종목
   'SAMSUNG', 'SKHYNIX', 'SKHY', 'CXMT', 'OPENAI', 'ANTHROPIC', 'UNITREE', 'ZHIPU', 'MINIMAX'
 ];

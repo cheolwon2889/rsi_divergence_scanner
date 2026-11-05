@@ -64,6 +64,8 @@ RSI 14에서 좌우 5봉짜리 피벗을 잡고 두 피벗을 비교합니다. �
 
 거래대금 상위 코인을 훑다가, 다이버전스가 **확정**된 신호가 처음 나오면 텔레그램으로 한 번 알려줘요.
 형성 중인 것은 뒤집힐 수 있어서 보내지 않아요. 기본은 1시간봉·4시간봉·일봉, 상승과 하락 모두예요.
+일반 다이버전스 중에서 첫 번째 저점 RSI가 30 이하(하락은 첫 번째 고점이 70 이상)인 것만 보내요.
+히든까지 받으려면 `DIV_ALERT_KIND=all`, 30·70 조건을 빼려면 `DIV_ALERT_ZONE_ONLY=off` 를 넣어요.
 24시간 거래대금이 500만 USDT 미만인 종목은 빼요. 거래가 얇은 종목은 5분봉에서 가격이 들쭉날쭉해서
 지표가 잘 안 맞고, 바로 빠져나오기도 어렵기 때문이에요.
 
@@ -77,8 +79,9 @@ ABC/USDT (Gate 선물)
 
 가격   0.4120 → 0.3985
 RSI    28.4 → 41.2
+첫 번째 저점  10-30 14:00 KST
 두 번째 저점  11-01 10:00 KST
-현재가  0.4031
+지금 RSI  47.3 · 현재가  0.4031
 과매도권(RSI 30 이하)에서 시작
 
 https://www.gate.io/futures/USDT/ABC_USDT
@@ -133,7 +136,7 @@ https://www.gate.io/futures/USDT/ABC_USDT
 - `TOP_N`: 거래대금 상위 몇 개를 볼지. 기본 150
 - `MIN_VOLUME`: 24시간 거래대금이 이 값(USDT)보다 적으면 제외. 기본 100만
 - `EXTRA_NON_CRYPTO`: 비코인으로 표시할 티커를 쉼표로 추가
-- `DIV_ALERT`, `DIV_ALERT_TIMEFRAMES`, `DIV_ALERT_SIDE`, `DIV_ALERT_MAX_AGE`, `DIV_ALERT_MIN_VOLUME`: 다이버전스 확정 알림 (위 참고)
+- `DIV_ALERT`, `DIV_ALERT_TIMEFRAMES`, `DIV_ALERT_SIDE`, `DIV_ALERT_KIND`, `DIV_ALERT_ZONE_ONLY`, `DIV_ALERT_MAX_AGE`, `DIV_ALERT_MIN_VOLUME`: 다이버전스 확정 알림 (위 참고)
 - `HARMONIC_TELEGRAM`: 하모닉 PRZ 텔레그램 알림. 기본 `off`
 
 ## Render에 올리기

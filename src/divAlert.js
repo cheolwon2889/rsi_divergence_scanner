@@ -45,8 +45,9 @@ function message(it) {
     '',
     `가격   ${fmtPx(it.p1.price)} → ${fmtPx(it.p2.price)}`,
     `RSI    ${it.p1.rsi.toFixed(1)} → ${it.p2.rsi.toFixed(1)}`,
+    `첫 번째 ${up ? '저점' : '고점'}  ${fmtKst(it.p1.rt)} KST`,
     `두 번째 ${up ? '저점' : '고점'}  ${fmtKst(it.p2Time)} KST`,
-    `현재가  ${fmtPx(it.lastClose)}`,
+    `지금 RSI  ${Number.isFinite(it.rsiNow) ? it.rsiNow.toFixed(1) : '-'} · 현재가  ${fmtPx(it.lastClose)}`,
     zone,
     '',
     it.url
@@ -61,8 +62,10 @@ function message(it) {
  * @param {number} [o.maxAgeBars=6]  두 번째 피벗이 이보다 오래됐으면 새 확정으로 보지 않는다
  * @param {number} [o.minVolume=0]  24시간 거래대금(USDT)이 이보다 적은 종목은 보내지 않는다
  * @param {(symbol:string)=>number} [o.volumeOf]  종목의 24시간 거래대금을 돌려준다
+ * @param {'all'|'regular'|'hidden'} [o.kind='all']
+ * @param {boolean} [o.zoneOnly=false]  첫 피벗이 과매도·과매수권(30·70)인 것만 보낸다
  */
-function createDivAlerter({ notify, side = 'all', timeframes = null, maxAgeBars = 6, minVolume = 0, volumeOf = () => 0 }) {
+function createDivAlerter({ notify, side = 'all', timeframes = null, maxAgeBars = 6, minVolume = 0, volumeOf = () => 0, kind = 'all', zoneOnly = false }) {
   const sent = new Set();
   const seededTf = new Set();
 
@@ -78,6 +81,8 @@ function createDivAlerter({ notify, side = 'all', timeframes = null, maxAgeBars 
     for (const it of items) {
       if (it.status !== 'confirmed' || it.nonCrypto) continue;
       if (side !== 'all' && it.side !== side) continue;
+      if (kind !== 'all' && it.kind !== kind) continue;
+      if (zoneOnly && !it.inZone) continue;
       if (minVolume && volumeOf(it.symbol) < minVolume) continue;   // 거래량이 얇은 종목은 빠져나가기 어려워서 뺀다
       const k = keyOf(it);
       if (sent.has(k)) continue;
